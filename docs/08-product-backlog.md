@@ -6,6 +6,44 @@ This document contains future enhancements, "nice to have" features, and long-te
 
 ---
 
+## Features Moved from Phase 5
+
+The following features were originally part of Phase 5 (Enterprise & Security) but have been deprioritized and moved to the product backlog. While valuable for broader adoption and enterprise use, they are not necessary for the core world record attempt.
+
+### Former Sprint 12-13 Features (Now P1 Priority)
+
+#### Security Hardening & Monitoring
+- **Description**: Enterprise-grade security, monitoring, and logging capabilities
+- **Business Value**: Professional-grade deployment and maintenance
+- **Effort**: 2-3 sprints
+- **User Stories**:
+  - US-034: Secure API key management and rotation
+  - US-035: System health monitoring and alerting
+  - US-036: Data security assurance
+- **Components**:
+  - Security audit and vulnerability scanning
+  - API key encryption and rotation
+  - Comprehensive monitoring and alerting
+  - Performance analytics dashboard
+  - Audit logging for all operations
+
+#### Multi-City Support & Deployment
+- **Description**: Support for multiple metropolitan areas and automated deployment
+- **Business Value**: Enable record attempts in other cities and easier deployment
+- **Effort**: 2-3 sprints
+- **User Stories**:
+  - US-037: Multi-city geographic support
+  - US-038: Easy deployment and scaling
+  - US-039: Automated testing and deployment
+- **Components**:
+  - GeographicManager for multi-city configuration
+  - Docker containerization and orchestration
+  - CI/CD pipeline with automated deployment
+  - Production monitoring and health checks
+  - Backup and disaster recovery systems
+
+---
+
 ## High Priority Future Features
 
 ### P1: Real-Time Route Adaptation
@@ -383,10 +421,11 @@ This document contains future enhancements, "nice to have" features, and long-te
 
 ---
 
-**Total Backlog Items**: 28 features across 7 priority levels  
-**Estimated Timeline**: 5+ years for complete implementation  
-**Next Review**: Upon completion of Phase 5 (Enterprise & Security)
+**Total Backlog Items**: 30 features across 7 priority levels (includes 2 feature sets from former Phase 5)
+**Estimated Timeline**: 5+ years for complete implementation
+**Next Review**: Upon completion of Phase 4 (Enhancement & Polish)
 
-**Document Version**: 1.0  
-**Last Updated**: January 11, 2026  
+**Document Version**: 1.1
+**Last Updated**: January 11, 2026
+**Changes**: Added former Phase 5 features (Security Hardening, Multi-City Support) to backlog as P1 priority items
 **Purpose**: Guide long-term product evolution and feature planning
