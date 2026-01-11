@@ -15,6 +15,7 @@ Generate optimal walking routes through Salt Lake City metropolitan area to visi
 - **Primary Goal**: Route optimization for 200+ restaurant visits in 24 hours
 - **Travel Method**: On-foot (running/walking) - no private vehicles allowed
 - **Definition**: "Fast food" = over-counter service (includes food courts, coffee shops, frozen yogurt)
+- **CRITICAL**: Each unique physical location counts separately, regardless of chain/brand. Multiple locations of the same chain (e.g., two McDonald's) are valid targets
 - **Documentation**: GPS coordinates and receipts required for each visit
 - **Target Efficiency**: 15+ restaurants/hour in dense areas, 9/hour minimum overall
 
@@ -228,6 +229,9 @@ def optimize_route(restaurants: List[Restaurant]) -> List[Restaurant]:
 ## Data Quality & Validation
 
 ### Restaurant Classification Rules
+
+**CRITICAL**: DO NOT filter out duplicate chain names. Each unique `place_id` represents a distinct physical location that counts as a separate restaurant visit. Multiple McDonald's, Starbucks, or Subway locations are highly desirable for route efficiency.
+
 ```python
 # Fast food classification criteria
 FAST_FOOD_INDICATORS = {
@@ -246,32 +250,41 @@ FAST_FOOD_INDICATORS = {
     ]
 }
 
+# IMPORTANT: Chain density is an ADVANTAGE
+# Multiple locations of same chain = higher restaurants per unit distance
+# Example: 3 Starbucks within 2 blocks = 3 separate valid restaurants
+
 def classify_fast_food(restaurant: Restaurant) -> Tuple[bool, float]:
     """Classify restaurant as fast food with confidence score.
-    
+
+    IMPORTANT: This function classifies by TYPE (fast food vs sit-down),
+    NOT by uniqueness. Multiple locations of the same chain should ALL
+    return True if they meet fast food criteria.
+
     Returns:
         Tuple of (is_fast_food: bool, confidence: float)
     """
     confidence = 0.0
-    
+
     # Chain name matching (high confidence)
+    # NOTE: Finding a known chain name is GOOD, even if we've seen it before
     name_lower = restaurant.name.lower()
     for chain in FAST_FOOD_INDICATORS['chain_names']:
         if chain in name_lower:
             confidence += 0.8
             break
-    
+
     # Service type indicators
     for keyword in FAST_FOOD_INDICATORS['service_keywords']:
         if keyword in ' '.join(restaurant.place_types):
             confidence += 0.3
-    
+
     # Google place type analysis
     if 'meal_takeaway' in restaurant.place_types:
         confidence += 0.4
     if 'restaurant' in restaurant.place_types:
         confidence += 0.2
-    
+
     return confidence >= 0.5, min(confidence, 1.0)
 ```
 
@@ -279,23 +292,30 @@ def classify_fast_food(restaurant: Restaurant) -> Tuple[bool, float]:
 ```python
 # Always validate critical data
 def validate_restaurant_data(restaurant: Restaurant) -> List[str]:
-    """Validate restaurant data and return list of issues."""
+    """Validate restaurant data and return list of issues.
+
+    NOTE: DO NOT flag duplicate chain names as an issue. Only validate
+    that place_id is unique, not that name is unique.
+    """
     issues = []
-    
+
     # Coordinate validation
     lat, lng = restaurant.coordinates
     if not (-90 <= lat <= 90):
         issues.append(f"Invalid latitude: {lat}")
     if not (-180 <= lng <= 180):
         issues.append(f"Invalid longitude: {lng}")
-    
+
     # Required fields
     if not restaurant.name or len(restaurant.name.strip()) < 2:
         issues.append("Restaurant name missing or too short")
-    
+
     if not restaurant.place_id:
         issues.append("Place ID missing")
-    
+
+    # IMPORTANT: Do NOT add duplicate name checking here
+    # Multiple "McDonald's" locations are VALID and DESIRED
+
     return issues
 ```
 

@@ -2,6 +2,8 @@
 
 A specialized routing system designed to help ultramarathon runner Jacob break the world record for "Most fast food restaurants visited in 24 hours." Current record: 150 restaurants. Target: 202+.
 
+**CRITICAL RULE**: Each unique physical location counts as a separate restaurant, regardless of chain/brand name. Multiple locations of the same chain (e.g., two McDonald's one block apart) are valid and highly desirable targets for route efficiency.
+
 ## Overview
 
 The Fast Food Route Optimizer generates optimal walking/running routes through metropolitan areas (starting with Salt Lake City) to visit the maximum number of fast food restaurants within 24 hours. It prioritizes high-density clusters (food courts, shopping centers) and efficient inter-cluster travel.

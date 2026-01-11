@@ -60,24 +60,29 @@ Scalability: Support other metropolitan areas for future attempts
 Core Features
 4.1 Restaurant Discovery
 
+**IMPORTANT**: Each unique physical location counts as a separate restaurant, regardless of chain/brand. Multiple locations of the same chain (e.g., two McDonald's one block apart) are valid and desirable targets. The goal is to maximize physical locations visited, not unique brands.
+
 FR-001: Query Google Places API for restaurant data within configurable radius
 FR-002: Filter results by "fast food" criteria (over-counter service)
 FR-003: Include food courts with individual vendor enumeration
 FR-004: Collect operating hours, location coordinates, and contact information
 FR-005: Support manual addition/removal of restaurants from dataset
+FR-006: Preserve all locations regardless of chain name duplication (each place_id is unique)
 
 4.2 Route Optimization
 
-FR-006: Calculate optimal routing between restaurant clusters
-FR-007: Prioritize maximum restaurants per square mile (density optimization)
-FR-008: Generate primary routes with backup restaurant options
-FR-009: Account for walking/running travel between locations
-FR-010: Support starting location flexibility within Salt Lake metro area
+FR-007: Calculate optimal routing between restaurant clusters
+FR-008: Prioritize maximum restaurants per square mile (density optimization)
+FR-009: Generate primary routes with backup restaurant options
+FR-010: Account for walking/running travel between locations
+FR-011: Support starting location flexibility within Salt Lake metro area
+FR-012: Optimize for chain density (multiple locations of same brand in close proximity)
 
 4.3 Data Analysis & Clustering
 
-FR-011: Perform density-based clustering of nearby restaurants
-FR-012: Rank clusters by efficiency (restaurants per travel distance)
+FR-013: Perform density-based clustering of nearby restaurants
+FR-014: Rank clusters by efficiency (restaurants per travel distance)
+FR-015: Identify high-value clusters with multiple chain locations in close proximity
 FR-013: Calculate distance matrices between all restaurant pairs
 FR-014: Identify optimal inter-cluster routing sequences
 FR-015: Generate efficiency reports (restaurants/hour potential)

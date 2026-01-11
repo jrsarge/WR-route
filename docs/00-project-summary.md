@@ -7,6 +7,8 @@ The Fast Food Route Optimizer is a specialized routing system designed to help u
 ### Core Challenge
 Optimize walking/running routes through Salt Lake City metropolitan area to visit 200+ fast food restaurants within 24 hours, prioritizing high-density clusters (food courts, shopping centers) and efficient inter-cluster travel.
 
+**Critical Detail**: Each unique physical location counts as a separate restaurant visit, regardless of chain or brand name. Multiple locations of the same chain (e.g., three Starbucks within two blocks) are valid and highly valuable targets. The goal is maximizing physical locations visited, not unique brands.
+
 ---
 
 ## Complete Documentation Set
@@ -67,6 +69,13 @@ Optimize walking/running routes through Salt Lake City metropolitan area to visi
 - Priority levels and implementation timelines
 - Platform extensions and integrations
 
+### 9. Chain Locations Policy (CRITICAL)
+**File**: `09_Chain_Locations_Policy.md`
+- **CRITICAL RULE**: Multiple locations of same chain count separately
+- Implementation requirements for all sprints
+- Code examples and validation rules
+- Why chain density is strategically valuable
+
 ---
 
 ## Claude Code Implementation Workflow
@@ -114,10 +123,11 @@ Config Files  Distance Calc    Visualizations
 ```
 
 ### Key Algorithms
-- **Clustering**: DBSCAN for density-based restaurant grouping
+- **Clustering**: DBSCAN for density-based restaurant grouping (DO NOT filter duplicate chain names)
 - **Intra-cluster TSP**: Nearest neighbor + 2-opt for route optimization
 - **Inter-cluster**: Genetic algorithm for cluster sequencing
 - **Distance**: Haversine for fast calculations, geodesic for accuracy
+- **Chain Density Recognition**: Identify and prioritize areas with multiple locations of same chains
 
 ### Performance Targets
 - **Restaurant Search**: 1000+ restaurants in <60 seconds

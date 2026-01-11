@@ -37,14 +37,18 @@ class GoogleMapsClient:
 ```python
 @dataclass
 class Restaurant:
-    place_id: str
-    name: str
-    address: str
-    coordinates: Tuple[float, float]
+    place_id: str           # UNIQUE identifier - Google Places ID
+    name: str               # Chain/restaurant name (CAN be duplicate)
+    address: str            # Physical address (should be unique)
+    coordinates: Tuple[float, float]  # GPS coordinates
     place_types: List[str]
     operating_hours: Dict
     is_fast_food: bool
     cluster_id: Optional[int]
+
+    # NOTE: Multiple restaurants can share the same 'name' (e.g., "McDonald's")
+    # Each unique place_id represents a distinct physical location
+    # This is intentional and valuable for route optimization
 
 @dataclass  
 class RouteCluster:
@@ -58,10 +62,11 @@ class RouteCluster:
 #### Cache Management
 ```python
 class DataCache:
-    - save_restaurants()   # Persist API results
+    - save_restaurants()   # Persist API results (by place_id, not name)
     - load_restaurants()   # Resume from cache
     - invalidate()        # Force refresh
     - is_valid()         # Check freshness
+    - deduplicate_by_place_id()  # Remove duplicate place_ids ONLY (not names)
 ```
 
 ### 2.2 Business Logic Layer
