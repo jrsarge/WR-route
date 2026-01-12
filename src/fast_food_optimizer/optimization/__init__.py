@@ -8,6 +8,10 @@ from fast_food_optimizer.optimization.route_optimizer import (
     OptimizedRoute,
     RouteMetrics,
 )
+from fast_food_optimizer.optimization.global_optimizer import (
+    GlobalRouteOptimizer,
+    GlobalRoute,
+)
 
 __all__ = [
     "DistanceCalculator",
@@ -18,4 +22,6 @@ __all__ = [
     "IntraClusterOptimizer",
     "OptimizedRoute",
     "RouteMetrics",
+    "GlobalRouteOptimizer",
+    "GlobalRoute",
 ]
