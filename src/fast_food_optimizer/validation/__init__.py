@@ -1,3 +1,7 @@
 """Data validation and quality assurance for Fast Food Route Optimizer."""
 
-__all__ = []
+from fast_food_optimizer.validation.verifier import ManualVerifier
+
+__all__ = [
+    "ManualVerifier",
+]
