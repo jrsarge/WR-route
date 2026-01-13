@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from fast_food_optimizer.config.settings import get_config
-from fast_food_optimizer.data.google_client import GoogleMapsClient
+from fast_food_optimizer.data.osm_client import OpenStreetMapClient
 from fast_food_optimizer.data.classifier import FastFoodClassifier
 from fast_food_optimizer.data.persistence import DataPersistence
 from fast_food_optimizer.validation.validator import DataValidator
@@ -41,8 +41,8 @@ from fast_food_optimizer.models.restaurant import Restaurant, Coordinates
 # ============================================================================
 
 # Target city coordinates (Salt Lake City, UT by default)
-TARGET_LATITUDE = 40.7589
-TARGET_LONGITUDE = -111.8883
+TARGET_LATITUDE = 40.719493
+TARGET_LONGITUDE = -111.888749
 
 # Search radius in meters (20km = 20000m)
 SEARCH_RADIUS = 25000
@@ -79,44 +79,31 @@ def main():
 
     try:
         # ====================================================================
-        # STEP 1: Load Configuration
+        # STEP 1: Initialize OpenStreetMap Client
         # ====================================================================
-        print("📝 Step 1: Loading configuration...")
-        config = get_config()
-
-        if not config.google_maps_api_key:
-            print("❌ ERROR: No Google Maps API key found!")
-            print("   Please create a .env file with:")
-            print("   GOOGLE_MAPS_API_KEY=your_api_key_here")
-            print()
-            print("   See TESTING.md for instructions on getting an API key.")
-            return 1
-
-        print(f"✅ API key configured")
+        print("📝 Step 1: Initializing OpenStreetMap client...")
+        print("   ✅ No API key required - using free OpenStreetMap data")
         print(f"   Target: ({TARGET_LATITUDE}, {TARGET_LONGITUDE})")
         print(f"   Radius: {SEARCH_RADIUS/1000:.1f}km")
         print()
 
         # ====================================================================
-        # STEP 2: Collect Restaurant Data
+        # STEP 2: Collect Restaurant Data from OpenStreetMap
         # ====================================================================
-        print("📍 Step 2: Collecting restaurants from Google Maps...")
-        print("   This may take a few minutes depending on search radius...")
+        print("📍 Step 2: Collecting restaurants from OpenStreetMap...")
+        print("   This may take 30-60 seconds for large areas...")
 
-        client = GoogleMapsClient(
-            api_key=config.google_maps_api_key,
-            rate_limit=config.google_maps_rate_limit
-        )
+        client = OpenStreetMapClient(timeout=90)
 
-        # Search for restaurants
-        results = client.search_nearby_restaurants(
+        # Search for all restaurants in the area
+        results = client.search_restaurants(
             latitude=TARGET_LATITUDE,
             longitude=TARGET_LONGITUDE,
             radius=SEARCH_RADIUS,
-            place_type="restaurant"
         )
 
-        print(f"✅ Found {len(results)} total restaurants")
+        print(f"✅ Found {len(results)} total restaurants from OpenStreetMap")
+        print(f"   Cost: $0.00 (OpenStreetMap is free!)")
         print()
 
         # ====================================================================
@@ -190,12 +177,11 @@ def main():
         print("💾 Step 5: Saving raw data...")
 
         persistence = DataPersistence()
-        persistence.save_restaurants(
+        saved_path = persistence.save_json(
             fast_food,
-            f"{OUTPUT_DIR}/raw_restaurants",
-            format="json"
+            "raw_restaurants"
         )
-        print(f"✅ Saved to {OUTPUT_DIR}/raw_restaurants.json")
+        print(f"✅ Saved to {saved_path}")
         print()
 
         # ====================================================================
@@ -362,7 +348,7 @@ def main():
         print()
 
         print("📁 OUTPUT FILES:")
-        print(f"   Raw Data: {OUTPUT_DIR}/raw_restaurants.json")
+        print(f"   Raw Data: data/raw_restaurants.json")
         print(f"   Maps: {OUTPUT_DIR}/*.html")
         print(f"   GPS Files: {OUTPUT_DIR}/exports/")
         print()

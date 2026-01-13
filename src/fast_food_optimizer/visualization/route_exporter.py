@@ -9,12 +9,41 @@ This module provides tools for exporting optimized routes to various formats:
 
 import json
 import csv
-from typing import Dict, List, Optional
+import numpy as np
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from pathlib import Path
 
 from fast_food_optimizer.models.restaurant import Restaurant
 from fast_food_optimizer.optimization.global_optimizer import GlobalRoute
+
+
+def convert_numpy_types(obj: Any) -> Any:
+    """Recursively convert numpy types to Python native types for JSON serialization.
+
+    Args:
+        obj: Object that may contain numpy types
+
+    Returns:
+        Object with numpy types converted to Python types
+    """
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        # Convert both keys and values
+        return {
+            convert_numpy_types(key): convert_numpy_types(value)
+            for key, value in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy_types(item) for item in obj)
+    return obj
 
 
 class RouteExporter:
@@ -337,6 +366,9 @@ class RouteExporter:
                     "latitude": route.end_location[0],
                     "longitude": route.end_location[1],
                 }
+
+        # Convert numpy types to Python native types for JSON serialization
+        data = convert_numpy_types(data)
 
         # Write to file
         with open(filepath, "w", encoding="utf-8") as f:
