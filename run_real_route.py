@@ -49,11 +49,12 @@ SEARCH_RADIUS = 25000
 
 # Route parameters
 TIME_BUDGET_HOURS = 24.0
-MIN_RESTAURANTS = 202
+MIN_RESTAURANTS = 250  # Target exactly 250 densest restaurants
+MAX_RESTAURANTS = 250  # Cap at 250 for efficiency
 
-# Clustering parameters
-CLUSTER_EPS_KM = 1.0  # Max distance between restaurants in a cluster
-CLUSTER_MIN_SAMPLES = 5  # Minimum restaurants per cluster
+# Clustering parameters - TIGHT for maximum density
+CLUSTER_EPS_KM = 0.8  # Max 800m between restaurants in a cluster (very tight)
+CLUSTER_MIN_SAMPLES = 8  # Only include dense clusters with 8+ restaurants
 
 # Output directory
 OUTPUT_DIR = "data/world_record_route"
@@ -208,6 +209,100 @@ def main():
         print()
 
         # ====================================================================
+        # STEP 6.5: Find Tightest Geographic Circle with 250 Restaurants
+        # ====================================================================
+        print(f"📍 Step 6.5: Finding tightest geographic area with {MAX_RESTAURANTS} restaurants...")
+        print(f"   Analyzing all {len(fast_food)} restaurants...")
+
+        import math
+
+        def haversine_distance(lat1, lon1, lat2, lon2):
+            """Calculate distance in km between two points."""
+            R = 6371  # Earth radius in km
+            lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+            dlat = lat2 - lat1
+            dlon = lon2 - lon1
+            a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+            c = 2 * math.asin(math.sqrt(a))
+            return R * c
+
+        # For each restaurant, find the radius needed to capture 250 restaurants
+        best_center = None
+        best_radius_km = float('inf')
+        best_restaurants = []
+
+        # Sample every Nth restaurant to speed up (or all if dataset is small)
+        sample_step = max(1, len(fast_food) // 100)  # Check ~100 potential centers
+
+        for i, center_restaurant in enumerate(fast_food[::sample_step]):
+            center_lat = center_restaurant.coordinates.latitude
+            center_lon = center_restaurant.coordinates.longitude
+
+            # Calculate distance from this center to all restaurants
+            distances = []
+            for restaurant in fast_food:
+                dist = haversine_distance(
+                    center_lat, center_lon,
+                    restaurant.coordinates.latitude,
+                    restaurant.coordinates.longitude
+                )
+                distances.append((dist, restaurant))
+
+            # Sort by distance and take closest 250
+            distances.sort(key=lambda x: x[0])
+            closest_250 = distances[:MAX_RESTAURANTS]
+            radius_needed = closest_250[-1][0]  # Distance to 250th restaurant
+
+            # Track the best (smallest radius) center
+            if radius_needed < best_radius_km:
+                best_radius_km = radius_needed
+                best_center = (center_lat, center_lon, center_restaurant.name)
+                best_restaurants = [r for _, r in closest_250]
+
+            if (i + 1) % 10 == 0:
+                print(f"   Checked {(i + 1) * sample_step}/{len(fast_food)} potential centers... (best so far: {best_radius_km:.2f}km radius)")
+
+        print(f"\n✅ Found tightest geographic area!")
+        print(f"   Center: {best_center[2]}")
+        print(f"   Location: ({best_center[0]:.6f}, {best_center[1]:.6f})")
+        print(f"   Radius: {best_radius_km:.2f}km")
+        print(f"   Contains: {len(best_restaurants)} restaurants")
+        print(f"   Diameter: {best_radius_km * 2:.2f}km")
+
+        # Calculate approximate area
+        area_km2 = math.pi * (best_radius_km ** 2)
+        density = len(best_restaurants) / area_km2
+        print(f"   Area: {area_km2:.2f}km²")
+        print(f"   Density: {density:.1f} restaurants/km²")
+        print()
+
+        selected_restaurants = best_restaurants
+
+        # Create clusters for visualization - group nearby restaurants
+        # We'll recreate clusters just for the selected 250
+        from sklearn.cluster import DBSCAN
+        import numpy as np
+
+        coords = np.array([
+            [r.coordinates.latitude, r.coordinates.longitude]
+            for r in selected_restaurants
+        ])
+
+        # Use tight clustering for visualization
+        clustering = DBSCAN(eps=0.008, min_samples=3).fit(coords)  # ~0.8km
+
+        filtered_clusters = {}
+        for cluster_id in set(clustering.labels_):
+            if cluster_id == -1:
+                continue  # Skip noise
+            mask = clustering.labels_ == cluster_id
+            cluster_restaurants = [selected_restaurants[i] for i, m in enumerate(mask) if m]
+            filtered_clusters[cluster_id] = cluster_restaurants
+
+        print(f"   Visualization: {len(filtered_clusters)} micro-clusters within this area")
+        print()
+
+        # ====================================================================
         # STEP 7: Optimize Global Route
         # ====================================================================
         print("🚀 Step 7: Optimizing global route...")
@@ -216,7 +311,7 @@ def main():
         optimizer = GlobalRouteOptimizer()
 
         route = optimizer.optimize_global_route(
-            clusters,
+            filtered_clusters,  # Use filtered clusters instead of all clusters
             start_location=(TARGET_LATITUDE, TARGET_LONGITUDE),
             time_budget_hours=TIME_BUDGET_HOURS,
             algorithm="2opt"
@@ -265,7 +360,7 @@ def main():
         print("🔄 Step 9: Generating alternative routes...")
 
         alternatives = optimizer.generate_alternative_routes(
-            clusters,
+            filtered_clusters,  # Use filtered clusters
             start_location=(TARGET_LATITUDE, TARGET_LONGITUDE),
             num_alternatives=2
         )
@@ -282,10 +377,10 @@ def main():
 
         visualizer = MapVisualizer()
 
-        # Clusters map
+        # Clusters map (showing only selected dense clusters)
         print("   Creating clusters map...")
         clusters_map = visualizer.visualize_clusters(
-            clusters,
+            filtered_clusters,  # Show only selected clusters
             center=(TARGET_LATITUDE, TARGET_LONGITUDE),
             show_noise=False
         )
