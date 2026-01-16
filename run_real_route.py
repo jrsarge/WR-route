@@ -50,7 +50,7 @@ SEARCH_RADIUS = 25000
 # Route parameters
 TIME_BUDGET_HOURS = 24.0
 MIN_RESTAURANTS = 250  # Target exactly 250 densest restaurants
-MAX_RESTAURANTS = 250  # Cap at 250 for efficiency
+MAX_RESTAURANTS = 251  # Cap at 251 to ensure we get at least 250 after clustering
 
 # Clustering parameters - TIGHT for maximum density
 CLUSTER_EPS_KM = 0.8  # Max 800m between restaurants in a cluster (very tight)
@@ -154,6 +154,49 @@ def main():
         print(f"\n   Top chains found:")
         for chain, count in top_chains:
             print(f"   - {chain}: {count} locations")
+        print()
+
+        # ====================================================================
+        # STEP 3.5: Filter Excluded Restaurants
+        # ====================================================================
+        print("🚫 Step 3.5: Filtering manually excluded restaurants...")
+
+        # Load exclusion list
+        exclusion_file = Path(__file__).parent / "excluded_restaurants.txt"
+        excluded_names = []
+
+        if exclusion_file.exists():
+            with open(exclusion_file, 'r', encoding='utf-8') as f:
+                excluded_names = [line.strip().lower() for line in f if line.strip()]
+
+            print(f"   Loaded {len(excluded_names)} excluded restaurant names")
+
+            # Filter out excluded restaurants (partial name matching)
+            initial_count = len(fast_food)
+            fast_food_filtered = []
+            excluded_count = 0
+
+            for restaurant in fast_food:
+                restaurant_name_lower = restaurant.name.lower()
+                is_excluded = False
+
+                for excluded_name in excluded_names:
+                    # Partial match - if excluded name appears in restaurant name
+                    if excluded_name in restaurant_name_lower:
+                        is_excluded = True
+                        excluded_count += 1
+                        break
+
+                if not is_excluded:
+                    fast_food_filtered.append(restaurant)
+
+            fast_food = fast_food_filtered
+
+            print(f"✅ Filtered out {excluded_count} restaurant locations")
+            print(f"   Remaining: {len(fast_food)} restaurants")
+        else:
+            print(f"   No exclusion file found, skipping filter")
+
         print()
 
         # ====================================================================
