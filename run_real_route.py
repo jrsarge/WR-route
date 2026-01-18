@@ -197,6 +197,37 @@ def main():
         else:
             print(f"   No exclusion file found, skipping filter")
 
+        # Manually add downtown Kneaders if not present (in mall with Osaka Japan on different floor)
+        kneaders_downtown_lat = 40.7686785
+        kneaders_downtown_lon = -111.8890322
+
+        has_downtown_kneaders = any(
+            'kneaders' in r.name.lower() and
+            abs(r.coordinates.latitude - kneaders_downtown_lat) < 0.001 and
+            abs(r.coordinates.longitude - kneaders_downtown_lon) < 0.001
+            for r in fast_food
+        )
+
+        if not has_downtown_kneaders:
+            print(f"\n   📍 Adding Kneaders Bakery & Cafe (mall location)...")
+            kneaders_manual = Restaurant(
+                place_id="manual_kneaders_downtown",
+                name="Kneaders Bakery & Cafe",
+                address="City Creek Center, Salt Lake City, UT",
+                coordinates=Coordinates(
+                    latitude=kneaders_downtown_lat,
+                    longitude=kneaders_downtown_lon
+                ),
+                is_fast_food=True,
+                confidence_score=0.8,
+                rating=None,
+                place_types=["restaurant", "bakery", "cafe"]
+            )
+            fast_food.append(kneaders_manual)
+            print(f"   ✅ Added Kneaders Bakery & Cafe")
+        else:
+            print(f"\n   ✓ Kneaders Bakery & Cafe already in dataset")
+
         print()
 
         # ====================================================================
@@ -312,6 +343,24 @@ def main():
         print(f"   Contains: {len(best_restaurants)} restaurants")
         print(f"   Diameter: {best_radius_km * 2:.2f}km")
 
+        # Debug: Check if Kneaders is in the selection
+        kneaders_in_selection = [r for r in best_restaurants if 'kneaders' in r.name.lower()]
+        if kneaders_in_selection:
+            print(f"   ✓ Kneaders locations in selection: {len(kneaders_in_selection)}")
+            for k in kneaders_in_selection:
+                print(f"     - {k.name}")
+        else:
+            print(f"   ⚠️  No Kneaders in selection")
+            kneaders_all = [r for r in fast_food if 'kneaders' in r.name.lower()]
+            if kneaders_all:
+                print(f"   (Found {len(kneaders_all)} Kneaders in total pool):")
+                for k in kneaders_all:
+                    dist = haversine_distance(
+                        best_center[0], best_center[1],
+                        k.coordinates.latitude, k.coordinates.longitude
+                    )
+                    print(f"     - {k.name} at ({k.coordinates.latitude}, {k.coordinates.longitude}), distance: {dist:.3f}km")
+
         # Calculate approximate area
         area_km2 = math.pi * (best_radius_km ** 2)
         density = len(best_restaurants) / area_km2
@@ -336,13 +385,16 @@ def main():
 
         filtered_clusters = {}
         for cluster_id in set(clustering.labels_):
-            if cluster_id == -1:
-                continue  # Skip noise
             mask = clustering.labels_ == cluster_id
             cluster_restaurants = [selected_restaurants[i] for i, m in enumerate(mask) if m]
-            filtered_clusters[cluster_id] = cluster_restaurants
+            if cluster_restaurants:  # Only add non-empty clusters
+                filtered_clusters[cluster_id] = cluster_restaurants
 
-        print(f"   Visualization: {len(filtered_clusters)} micro-clusters within this area")
+        # Count actual clusters vs noise
+        num_noise = len(filtered_clusters.get(-1, []))
+        num_clusters = len([c for c in filtered_clusters.keys() if c != -1])
+
+        print(f"   Visualization: {num_clusters} micro-clusters + {num_noise} individual restaurants")
         print()
 
         # ====================================================================
