@@ -32,7 +32,6 @@ Ramblin Roads
 Matteo
 Spencers for Steaks and Chops
 Trofi
-Starbucks
 Ruth's Chris Steak House
 Sonoma Grill
 Christopher's Prime Tavern & Grill
@@ -113,7 +112,6 @@ IHOP
 Zao Asian Cafe
 Pizzeria Limone
 Tony Burgers
-A&W
 Yoshis Japanese Grill
 Roux
 Yoko Ramen
@@ -126,7 +124,6 @@ Saffron Valley East India Cafe
 Foodie & Sweetie DMarket
 Cafe 140B
 The Lion House Pantry
-Jimmy John's
 Taqueria 27
 La Cevichería
 BonFire Grill
